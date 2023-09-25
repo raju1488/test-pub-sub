@@ -1,0 +1,45 @@
+name: Trigger auto deployment for ca-checkout-cjhky5vbzaefy
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '//**'
+    - '.github/workflows/ca-checkout-cjhky5vbzaefy-AutoDeployTrigger-df19ab01-a85a-467c-b996-6d9de0a23023.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.CACHECKOUTCJHKY5VBZAEFY_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CACHECKOUTCJHKY5VBZAEFY_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CACHECKOUTCJHKY5VBZAEFY_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: crcjhky5vbzaefy.azurecr.io
+          registryUsername: ${{ secrets.CACHECKOUTCJHKY5VBZAEFY_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CACHECKOUTCJHKY5VBZAEFY_REGISTRY_PASSWORD }}
+          containerAppName: ca-checkout-cjhky5vbzaefy
+          resourceGroup: rg-raj
+          imageToBuild: crcjhky5vbzaefy.azurecr.io/ca-checkout-cjhky5vbzaefy:${{ github.sha }}
+          dockerfilePath: Dockerfile
+
+
